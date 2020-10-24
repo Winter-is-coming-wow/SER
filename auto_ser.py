@@ -34,6 +34,9 @@ def listen(channels,sample_rate,chunk,writer):
     p.terminate()
     print('* End Recording * ')
 
+def draw(reader):
+    pass
+
 def main(filename=None):
     ser=analyser('cache/1.h5')
 

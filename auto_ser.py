@@ -7,6 +7,8 @@ import multiprocessing
 from multiprocessing import Process,Pipe
 import struct as st
 import wave
+import matplotlib.pyplot as plt
+import soundfile
 
 from Analyser import analyser
 
@@ -35,7 +37,18 @@ def listen(channels,sample_rate,chunk,writer):
     print('* End Recording * ')
 
 def draw(reader):
-    pass
+    frames=[]
+    plt.figure(figsize=(15,5))
+    while True:
+        if len(frames)>50000:
+            frames.clear()
+        recv=reader.recv()
+        frames.extend(recv)
+        plt.plot(range(len(frames)),frames)
+        plt.xlim(0,50000)
+        plt.ylim(0.0,1.0)
+        plt.pause(1)
+        plt.clf()
 
 def main(filename=None):
     ser=analyser('cache/1.h5')
@@ -46,8 +59,11 @@ def main(filename=None):
 
     if(filename==None):
         one,another=Pipe()
+        one_,another_=Pipe()
         subprocess=Process(target=listen,args=(channels,sample_rate,chunk,one))
+        subprocess2=Process(target=draw,args=(another_,))
         subprocess.start()
+        subprocess2.start()
 
         frame=[]
         while True:
@@ -56,10 +72,12 @@ def main(filename=None):
             except EOFError:
                 break
             slice = st.unpack(str(chunk)+'h', recv)
+            slice=[i/32768.0 for i in slice]
             if(len(frame)<sample_rate*3):
                 frame.extend(slice)
-
+                one_.send(slice)
             else:
+                soundfile.write('G:/000.wav',frame,16000)
                 signal=ser.endpoint_detection(frame.copy())
                 frame.clear()
                 if(len(signal)<8000):
@@ -71,9 +89,6 @@ def main(filename=None):
         pass
 
 
-
-    one.close()
-    another.close()
 
     print('=======================================END==================================')
 

@@ -126,7 +126,6 @@ class analyser():
         flag = False
         for i in range(len(E)):
             if E[i] >= E_high and not flag:
-                print(E[i])
                 a.append(i)
                 flag = True
             elif E[i] < E_high and flag:

@@ -115,11 +115,11 @@ class analyser():
         # 计算过零率
         Z = librosa.feature.zero_crossing_rate(pad_signal, 128, 64, center=False)[0].tolist()
 
-        E_high = np.sum(E) / len(E) / 10  # 能量高门限
-        E_low = E_high / 10  # 能量低门限
+        E_high = 0.001  # 能量高门限
+        E_low = np.sum(E[:10]) / 10  # 能量低门限
         Z_thresh = np.sum(Z[:10]) / 10  # 过零率门限
         # print(E_high,E_low,Z_thresh)
-        frame_thresh = 5
+        frame_thresh = 10
         seg = []
         a = []
         # 用能量高门限过滤

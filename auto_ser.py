@@ -20,7 +20,6 @@ def listen(channels,sample_rate,chunk,writer):
                     input=True,
                     frames_per_buffer=chunk  #pyaudio内置缓存区大小
                     )
-
     # Determine the timestamp of the start of the response interval
     print('* Start Recording *')
     stream.start_stream()
@@ -46,8 +45,8 @@ def draw(reader):
         frames.extend(recv)
         plt.plot(range(len(frames)),frames)
         plt.xlim(0,50000)
-        plt.ylim(0.0,1.0)
-        plt.pause(1)
+        #plt.ylim(0.0,1.0)
+        plt.pause(0.01)
         plt.clf()
 
 def main(filename=None):

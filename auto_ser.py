@@ -49,6 +49,19 @@ def draw(reader):
         plt.pause(0.01)
         plt.clf()
 
+def load_audio(filename,sr,writer):
+    y,sr=librosa.load(filename,sr=sr)
+    L=0
+    start=time.time()
+    while L+sr<len(y):
+        writer.send(y[L:L+sr].copy())
+        L+=sr
+        time.sleep(1)
+    if L<len(y):
+        writer.send(y[L:].copy())
+    return
+
+
 def main(filename=None):
     ser=analyser('cache/1.h5')
 
@@ -76,7 +89,7 @@ def main(filename=None):
                 frame.extend(slice)
                 one_.send(slice)
             else:
-                soundfile.write('G:/000.wav',frame,16000)
+                #soundfile.write('G:/000.wav',frame,16000)
                 signal=ser.endpoint_detection(frame.copy())
                 frame.clear()
                 if(len(signal)<8000):
@@ -85,11 +98,39 @@ def main(filename=None):
                     ser.predict(signal)
 
     else:
-        pass
+        one, another = Pipe()
+        one_, another_ = Pipe()
+        subprocess = Process(target=load_audio, args=(filename, sample_rate, one))
+        subprocess2 = Process(target=draw, args=(another_,))
+        subprocess.start()
+        subprocess2.start()
+
+        frame = []
+        while True:
+            if not subprocess.is_alive():
+                subprocess.close()
+                subprocess2.terminate()
+                break
+            try:
+                recv = another.recv()
+            except EOFError:
+                break
+            if (len(frame) < sample_rate * 3):
+                frame.extend(recv)
+                one_.send(recv)
+            else:
+                signal = ser.endpoint_detection(frame.copy())
+                frame.clear()
+                if (len(signal) < 8000):
+                    continue
+                else:
+                    ser.predict(signal)
 
 
 
-    print('=======================================END==================================')
+    print('=======================================END====================================')
 
 if __name__ == "__main__":
-    main()
+    #filename = r'G:\deeplearning\FER datasets\IEMOCAP语料库\Session1\Session1\dialog\wav\Ses01F_impro01.wav'
+    filename = r'G:\deeplearning\FER datasets\RAVDESS\savessData\Audio_speechh_Actors_01-24\Actor_01\03-01-01-01-01-01-01.wav'
+    main(filename)
